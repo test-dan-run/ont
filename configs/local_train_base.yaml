@@ -1,0 +1,5 @@
+defaults:
+  - data: snsd
+  - model: dcunet
+  - optim: adam
+  - run: 1xGPU

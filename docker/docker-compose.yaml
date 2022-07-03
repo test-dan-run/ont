@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  local:
+    stdin_open: true
+    tty: true
+    image: dleongsh/ont:v0.0.3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    ports:
+      - 6006:6006
+    volumes:
+      - /mnt/c/projects/ont:/ont
+      - /mnt/c/projects/MS-SNSD:/dataset:z
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    shm_size: 16gb
+    command: python3 local_train.py

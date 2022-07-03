@@ -1,0 +1,13 @@
+train_noisy_data_dir: /dataset
+train_noisy_manifest_path: /dataset/train_manifest.json
+train_clean_data_dir: null
+train_clean_manifest_path: null
+
+valid_noisy_data_dir: /dataset
+valid_noisy_manifest_path: /dataset/valid_manifest.json
+valid_clean_data_dir: null
+valid_clean_manifest_path: null
+
+n_fft: 1022
+hop_length: 256
+max_len: 65280

@@ -1,0 +1,2 @@
+n_fft: 1022
+hop_length: 256
