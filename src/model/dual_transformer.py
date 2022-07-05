@@ -2,12 +2,11 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.nn.modules.rnn import GRU
 from torch.nn.modules.linear import Linear
-from torch.nn.modules.module import Module
 from torch.nn.modules.dropout import Dropout
 from torch.nn.modules.normalization import LayerNorm
 from torch.nn.modules.activation import MultiheadAttention
 
-class TransformerEncoderLayer(Module):
+class TransformerEncoderLayer(nn.Module):
     r"""TransformerEncoderLayer is made up of self-attn and feedforward network.
     This standard encoder layer is based on the paper "Attention Is All You Need".
     Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez,
@@ -140,5 +139,4 @@ class DualTransformer(nn.Module):
 
         del row_input, row_output, col_input, col_output
         output = self.output(output)  # [b, c, dim2, dim1]
-
         return output

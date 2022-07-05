@@ -1,3 +1,4 @@
+# docker build -t dleongsh/ont:v0.0.4 .
 FROM pytorch/pytorch:1.11.0-cuda11.3-cudnn8-runtime
 
 ENV TZ=Asia/Singapore

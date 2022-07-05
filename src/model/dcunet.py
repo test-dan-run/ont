@@ -76,9 +76,10 @@ class CConvTranspose2d(nn.Module):
         
         
     def forward(self, x):
+
         x_real = x[..., 0]
         x_im = x[..., 1]
-        
+
         ct_real = self.real_convt(x_real) - self.im_convt(x_im)
         ct_im = self.im_convt(x_real) + self.real_convt(x_im)
         
@@ -246,12 +247,13 @@ class DCUnet10_rTSTM(nn.Module):
     """
     Deep Complex U-Net with real TSTM.
     """
-    def __init__(self, n_fft, hop_length):
+    def __init__(self, n_fft, hop_length, device='cuda'):
         super().__init__()
         
         # for istft
         self.n_fft = n_fft
         self.hop_length = hop_length
+        self.device = device
         
         # downsampling/encoding
         self.downsample0 = Encoder(filter_size=(3,3), stride_size=(2,2), in_channels=1, out_channels=32)
@@ -290,7 +292,7 @@ class DCUnet10_rTSTM(nn.Module):
         d4_1 = self.dual_transformer(d4_1)
         d4_2 = self.dual_transformer(d4_2)
 
-        out = torch.rand(d4.shape)
+        out = torch.rand(d4.shape).to(self.device)
         out[:, :, :, :, 0] = d4_1
         out[:, :, :, :, 1] = d4_2
 
@@ -322,12 +324,13 @@ class DCUnet10_cTSTM(nn.Module):
     """
     Deep Complex U-Net with complex TSTM.
     """
-    def __init__(self, n_fft, hop_length):
+    def __init__(self, n_fft, hop_length, device='cuda'):
         super().__init__()
         
         # for istft
         self.n_fft = n_fft
         self.hop_length = hop_length
+        self.device = device
         
         # downsampling/encoding
         self.downsample0 = Encoder(filter_size=(3,3), stride_size=(2,2), in_channels=1, out_channels=32)
@@ -369,7 +372,7 @@ class DCUnet10_cTSTM(nn.Module):
         out_real = self.dual_transformer_real(d4_real)- self.dual_transformer_imag(d4_imag)
         out_imag = self.dual_transformer_imag(d4_real) + self.dual_transformer_real(d4_imag)   
         
-        out = torch.rand(d4.shape)
+        out = torch.rand(d4.shape).to(self.device)
         out[:, :, :, :, 0] = out_real
         out[:, :, :, :, 1] = out_imag
         #print("out:",out.shape)  

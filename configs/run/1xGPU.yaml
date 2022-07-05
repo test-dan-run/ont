@@ -1,4 +1,4 @@
-batch_size: 4
+batch_size: 16
 epochs: 200
 logs_dir: /ont/logs        # where all checkpoints, logs are stored
 ckpt_dir: /ont/checkpoints

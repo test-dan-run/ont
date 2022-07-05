@@ -2,6 +2,7 @@ import os
 import json
 import torch
 import torchaudio
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 from typing import Tuple, Optional
@@ -84,11 +85,10 @@ class SpeechDataset(Dataset):
 
     def _prepare_sample(self, waveform):
         current_len = waveform.shape[1]
-
-        output = torch.zeros((1, self.max_len), dtype=torch.float32)
-        output[0, -current_len:] = waveform[0, :self.max_len]
-
-        return output
+        if current_len > self.max_len:
+            return waveform[:, :self.max_len]
+        else:
+            return F.pad(waveform, (0, self.max_len-current_len))
 
     def __getitem__(self, index):
         # load to tensors and normalization

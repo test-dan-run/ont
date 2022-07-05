@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 
 from torch.optim import Adam
-from torch.optim.lr_scheduler import ReduceLROnPlateau, CyclicLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau, CyclicLR, StepLR
 import pytorch_lightning as pl
 
-from src.model.dcunet import DCUnet10
+from src.model.dcunet import DCUnet10, DCUnet10_cTSTM, DCUnet10_rTSTM
 from src.losses import RegularizedLoss
 from src.datasets.core.speech_datasets import SubSample
 
@@ -16,7 +16,7 @@ class LightningONT(pl.LightningModule):
 
         super(LightningONT, self).__init__()
 
-        self.dcunet = DCUnet10(**model_cfg)
+        self.dcunet = DCUnet10_rTSTM(**model_cfg)
         self.subsample = SubSample(k=2)
         self.loss_fn = RegularizedLoss()
 
@@ -136,9 +136,15 @@ class LightningONT(pl.LightningModule):
                 epoch_size_down = self.optim_cfg.epoch_size_down
             )
 
+        elif self.optim_cfg.scheduler == 'step':
+            scheduler = StepLR(
+                optimizer = optim,
+                step_size = self.optim_cfg.step_size,
+                gamma = self.optim_cfg.gamma
+            )
+
         return {
             'optimizer': optim,
             'monitor': 'valid_loss',
-            'lr_scheduler': scheduler,
-            'interval': self.optim_cfg.interval
+            'lr_scheduler': scheduler
         }

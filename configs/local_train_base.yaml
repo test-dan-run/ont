@@ -1,5 +1,5 @@
 defaults:
-  - data: snsd
+  - data: voicebank
   - model: dcunet
-  - optim: adam
+  - optim: adam_step
   - run: 1xGPU

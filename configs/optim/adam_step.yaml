@@ -1,0 +1,6 @@
+# StePLR
+optim: adam
+scheduler: step
+lr: 0.001
+step_size: 1
+gamma: 0.1
