@@ -1,9 +1,10 @@
 from typing import List
+import random
+import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau, CyclicLR
-
 import pytorch_lightning as pl
 
 from src.model.dcunet import DCUnet10
@@ -52,7 +53,7 @@ class LightningONT(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        x_noisy_stft, g1_stft, g1_wav, g2_wav, x_clean_stft = batch
+        x_noisy_stft, g1_stft, g1_wav, g2_wav, x_clean_stft, x_noisy = batch
         fx_wav, fg1_wav, g1fx, g2fx = self(x_noisy_stft, g1_stft)
 
         loss = self.loss_fn(g1_wav, fg1_wav, g2_wav, g1fx, g2fx)
@@ -62,13 +63,38 @@ class LightningONT(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
 
-        x_noisy_stft, g1_stft, g1_wav, g2_wav, x_clean_stft = batch
+        x_noisy_stft, g1_stft, g1_wav, g2_wav, x_clean_stft, x_noisy = batch
         fx_wav, fg1_wav, g1fx, g2fx = self(x_noisy_stft, g1_stft)
 
         loss = self.loss_fn(g1_wav, fg1_wav, g2_wav, g1fx, g2fx)
         self.log('valid_loss', loss, on_step=False, on_epoch=True, sync_dist=self.run_cfg.distributed)
 
-        return {'valid_loss': loss}
+        return {'valid_loss': loss, 'x_noisy': x_noisy[0], 'x_gen': fx_wav[0]}
+
+    def validation_epoch_end(self, validation_step_outputs):
+
+        noisy_list = [x['x_noisy'] for x in validation_step_outputs]
+        gened_list = [x['x_gen'] for x in validation_step_outputs]
+
+        rand_indices = random.sample(range(len(noisy_list)), k=min(len(noisy_list), 5))
+        for idx, rand_idx in enumerate(rand_indices):
+            noisy_wav, gen_wav = noisy_list[rand_idx], gened_list[rand_idx]
+            figure = plt.figure(figsize=(12,10))
+            plt.subplot(2,1,1, title=f'Noisy WAV (batch {rand_idx})')
+            plt.xticks([])
+            plt.yticks([])
+            plt.grid(False)
+            plt.plot(noisy_wav.squeeze().cpu().numpy())
+
+            plt.subplot(2,1,2, title=f'Generated WAV (batch {rand_idx})')
+            plt.xticks([])
+            plt.yticks([])
+            plt.grid(False)
+            plt.plot(gen_wav.cpu().numpy())
+            self.logger.experiment.add_figure(f'Waveform Comparison - {idx}', figure, global_step=self.current_epoch)
+            self.logger.experiment.add_audio(f'Noisy WAV - {idx}', noisy_wav.squeeze().cpu().numpy(), sample_rate=16000, global_step=self.current_epoch)
+            self.logger.experiment.add_audio(f'Clean WAV - {idx}', gen_wav.cpu().numpy(), sample_rate=16000, global_step=self.current_epoch)
+
 
     def test_step(self, batch, batch_idx):
 

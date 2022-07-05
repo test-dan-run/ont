@@ -3,11 +3,10 @@ import json
 import torch
 import torchaudio
 from torch.utils.data import Dataset
-import pytorch_lightning as pl
 
 from typing import Tuple, Optional
 
-class SubSample(pl.LightningModule):
+class SubSample(torch.nn.Module):
     def __init__(self, k: int):
         assert k == 2 or k == 4, 'value of k can only be 2 or 4'
 
@@ -16,26 +15,24 @@ class SubSample(pl.LightningModule):
         self.k_correction = 192 if k == 4 else 128
 
     def forward(self, wav: torch.FloatTensor) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
-        channels, dims = wav.shape
-        sampled_dims = dims // self.k - self.k_correction
-        
-        # official implementation
-        # for channel in range(channels):
-        #     for i in range(sampled_dims):
-        #         s_i = i * self.k
-        #         num = np.random.choice(self.k_range)
-        #         wav1[channel, i], wav2[channel, i] = wav[channel, s_i+num%self.k], wav[channel, s_i+(num+1)%self.k]
-        
-        # return wav1, wav2
 
-        # speed-up implementation
-        k_values = torch.arange(sampled_dims) * self.k
-        wav1_rand_nums = torch.randint(high=self.k, size=(sampled_dims,))
+        channels, length = wav.shape
+        sampled_length = length // self.k - self.k_correction
+
+        # get the starting indices of the values to be sampled from the original wav
+        sampled_indices = torch.arange(sampled_length) * self.k
+
+        # randomise the starting indices by the value of k (input samples)
+        wav1_rand_nums = torch.randint(high=self.k, size=(sampled_length,))
+        wav1_idx = sampled_indices + wav1_rand_nums
+
+        # get indices adjacent to the input indices (target samples)
         wav2_rand_nums = (wav1_rand_nums+1)%self.k
-        wav1_idx = k_values + wav1_rand_nums
-        wav2_idx = k_values + wav2_rand_nums
+        wav2_idx = sampled_indices + wav2_rand_nums
 
+        # generate input+target samples based on indices
         wav1, wav2 = wav[:,wav1_idx], wav[:,wav2_idx]
+
         return wav1, wav2
 
 class SpeechDataset(Dataset):
@@ -110,4 +107,4 @@ class SpeechDataset(Dataset):
         g1_wav, g2_wav = self.subsample(x_noisy)
         g1_stft = torch.stft(input=g1_wav, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
         
-        return x_noisy_stft, g1_stft, g1_wav, g2_wav, x_clean_stft
+        return x_noisy_stft, g1_stft, g1_wav, g2_wav, x_clean_stft, x_noisy

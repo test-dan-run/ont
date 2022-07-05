@@ -7,4 +7,3 @@ factor: 0.1
 patience: 5
 cooldown: 0
 eps: 0
-interval: epoch

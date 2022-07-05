@@ -7,4 +7,3 @@ num_workers: 8        # number of workers for dataloader
 save_top_k: 1         # Save top k checkpoints
 pin_memory: true
 distributed: false
-log_cm: true    # create confusion matrices during validation logging
